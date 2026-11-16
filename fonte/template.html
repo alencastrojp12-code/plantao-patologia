@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plantão de Patologia</title>
+<style>
+:root{--bg:#071114;--panel:#0e1c21;--panel2:#13262c;--line:#22393f;--ink:#eaf3f0;--mut:#9db3b0;--ecg:#3ddc97;--ok:#3ddc97;--bad:#ff7070;--tip:#ffd166;--fig:#f0a63c;--pul:#56b7f0;--car:#f4708a;--tb:#b892f5;--rim:#ffb36b;--inf:#7fd1c7;--neo:#e08fd0;--dig:#c9d46a;--tema:var(--ecg);--beat:1.5s}
+[data-tema=fig]{--tema:var(--fig)}[data-tema=pul]{--tema:var(--pul)}[data-tema=car]{--tema:var(--car)}[data-tema=tb]{--tema:var(--tb)}[data-tema=rim]{--tema:var(--rim)}[data-tema=inf]{--tema:var(--inf)}[data-tema=neo]{--tema:var(--neo)}[data-tema=dig]{--tema:var(--dig)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1000px 500px at 50% -10%,#123038 0,transparent 70%),var(--bg);color:var(--ink);font:17px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100vh;padding-bottom:90px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--tip);outline-offset:2px}
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:10px 18px;background:#071114ee;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{background:none;border:0;font-weight:800;letter-spacing:.2px;padding:0;white-space:nowrap}
+.monitor{flex:1;height:38px;overflow:hidden;position:relative;min-width:60px}
+.monitor svg{position:absolute;left:0;top:0;height:38px;width:800px;animation:scan var(--beat) linear infinite}
+.monitor path{fill:none;stroke:var(--ecg);stroke-width:2;filter:drop-shadow(0 0 4px var(--ecg))}
+body.arr .monitor path{stroke:var(--bad);filter:drop-shadow(0 0 4px var(--bad))}
+@keyframes scan{to{transform:translateX(-200px)}}
+.vitais{display:flex;gap:14px;font-family:ui-monospace,Consolas,monospace;font-size:14px;white-space:nowrap}
+.vitais b{display:block;font-size:19px;line-height:1.1;color:var(--ecg)}
+.vitais span{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.vitais div{text-align:right}
+main{max-width:800px;margin:0 auto;padding:22px 16px}
+h1{font-size:clamp(30px,7vw,46px);line-height:1.08;margin:18px 0 8px;letter-spacing:-.5px}
+h1 em{font-style:normal;color:var(--ecg)}
+.sub{color:var(--mut);margin:0 0 22px;max-width:60ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{text-align:left;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--tema);border-radius:12px;padding:15px 16px;transition:transform .12s,background .12s}
+.card:hover{transform:translateY(-2px);background:var(--panel2)}
+.card b{display:block;font-size:19px}.card small{color:var(--mut);display:block}
+.card.full{grid-column:1/-1}
+.linha{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-weight:600}
+.btn:hover{border-color:var(--mut)}
+.btn.pri{background:var(--ecg);border-color:var(--ecg);color:#04231a;font-weight:800}
+.barra{height:6px;background:var(--panel2);border-radius:9px;overflow:hidden;margin-bottom:14px}
+.barra i{display:block;height:100%;background:var(--tema);transition:width .3s}
+.tag{display:inline-block;font-size:13px;font-weight:700;color:var(--tema);margin-bottom:4px}
+.enun{font-size:20px;line-height:1.45;font-weight:600;margin:4px 0 14px}
+.figs{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.figs button{background:#000;border:1px solid var(--line);border-radius:10px;padding:0;overflow:hidden;flex:1 1 220px;max-width:100%}
+.figs img{display:block;width:100%;max-height:300px;object-fit:contain}
+.figs figure{margin:0;flex:1 1 220px;min-width:0}.figs figure button{width:100%}
+figcaption{color:var(--mut);font-size:14px;margin-top:4px}
+.ops{display:grid;gap:9px;margin:14px 0}
+.op{display:grid;grid-template-columns:34px 1fr;gap:10px;text-align:left;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;transition:background .12s,border-color .12s}
+.op:not([disabled]):hover{border-color:var(--tema);background:var(--panel2)}
+.op .l{width:30px;height:30px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;font-weight:800}
+.op small{display:block;color:var(--mut);font-size:15px;margin-top:3px}
+.op[disabled]{cursor:default;color:var(--ink)}
+.op.certa{border-color:var(--ok);background:#0f3029}.op.certa .l{background:var(--ok);color:#04231a}
+.op.errada{border-color:var(--bad);background:#35181c}.op.errada .l{background:var(--bad);color:#2d0808}
+.op.apaga{opacity:.78}
+.op.treme{animation:treme .35s}
+@keyframes treme{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.resp label{display:block;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);margin:12px 0 5px}
+.resp textarea{width:100%;min-height:120px;background:var(--panel);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:12px;font:inherit;resize:vertical}
+.resp textarea:focus{outline:none;border-color:var(--tema)}
+.btn:disabled{opacity:.5;cursor:default}
+.chat{display:grid;gap:8px;margin:12px 0 0}
+.msg{padding:10px 13px;border-radius:12px;max-width:92%;white-space:pre-wrap;background:var(--panel);border:1px solid var(--line)}
+.msg b{display:block;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut)}
+.msg.eu{justify-self:end;background:var(--panel2)}
+.msg.cl{border-left:4px solid var(--tema)}.msg.certo{border-left-color:var(--ok)}.msg.quase{border-left-color:var(--tip)}.msg.errado,.msg.falha{border-left-color:var(--bad)}
+.msg.dica{border-left-color:var(--tip);background:#2b2612}
+.filme{background:#12233a;border:1px solid #2c4f78;border-radius:10px;padding:11px 13px}.filme h3{color:var(--pul)}
+.glos dl{margin:6px 0 0;display:grid;grid-template-columns:max-content 1fr;gap:4px 12px}.glos dt{font-weight:700;text-transform:capitalize}.glos dd{margin:0;color:var(--mut)}
+@media(max-width:560px){.glos dl{grid-template-columns:1fr}.glos dd{margin-bottom:6px}}
+.fb{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px;scroll-margin-top:74px}
+.veredito{font-size:24px;font-weight:800;margin:0 0 8px;outline:0}
+.veredito.ok{color:var(--ok)}.veredito.no{color:var(--bad)}
+.player{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);border-radius:10px;padding:8px 10px;margin-bottom:12px}
+.player .btn{padding:6px 12px;font-size:15px}
+.onda{display:flex;gap:3px;align-items:center;height:22px;flex:1;min-width:50px}
+.onda i{width:4px;height:5px;background:var(--mut);border-radius:3px}
+.falando .onda i{background:var(--ecg);animation:onda .7s ease-in-out infinite}
+.onda i:nth-child(2){animation-delay:.1s}.onda i:nth-child(3){animation-delay:.2s}.onda i:nth-child(4){animation-delay:.3s}.onda i:nth-child(5){animation-delay:.4s}
+@keyframes onda{50%{height:20px}}
+.bloco{margin:12px 0 0}.bloco h3{margin:0 0 3px;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut)}
+.bloco p{margin:0}
+.macete{background:#2b2612;border:1px solid #6a5a1e;border-radius:10px;padding:11px 13px}.macete h3{color:var(--tip)}
+.chave{border-left:4px solid var(--ecg);padding-left:11px}
+.aviso{background:#361e12;border:1px solid #7a4522;border-radius:10px;padding:10px 13px;font-size:16px}
+.fixo{position:fixed;left:0;right:0;bottom:0;z-index:4;padding:10px 16px;background:linear-gradient(transparent,var(--bg) 35%);display:flex;justify-content:center}
+.fixo .btn{min-width:min(420px,100%);padding:13px 18px}
+.nota{--p:0;width:170px;height:170px;border-radius:50%;margin:10px auto;display:grid;place-items:center;background:conic-gradient(var(--ecg) calc(var(--p)*1%),var(--panel2) 0)}
+.nota div{width:138px;height:138px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font:800 42px ui-monospace,Consolas,monospace}
+.centro{text-align:center}
+.tema-l{display:grid;grid-template-columns:90px 1fr 56px;gap:10px;align-items:center;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:15px;background:var(--panel);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--tema)}
+.tab{overflow-x:auto;margin:12px 0}
+.aba[aria-pressed=true]{border-color:var(--tema);color:var(--tema)}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin:7px 0;text-align:left}
+summary{cursor:pointer;font-weight:600}
+dialog{background:#000;border:0;padding:0;max-width:96vw;max-height:94vh;border-radius:10px}
+dialog::backdrop{background:#000d}
+dialog img{display:block;max-width:96vw;max-height:94vh;min-width:min(90vw,700px);object-fit:contain}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9;width:100%;height:100%}
+@media(max-width:560px){.monitor{display:none}.top{justify-content:space-between}.enun{font-size:18px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="brand" id="inicio">Plantão de Patologia</button>
+  <div class="monitor" aria-hidden="true"><svg viewBox="0 0 800 38"><path id="ecg"/></svg></div>
+  <div class="vitais" aria-live="off">
+    <div><b id="vAc">0</b><span>acertos</span></div>
+    <div><b id="vSeq">0</b><span>sequência</span></div>
+    <div><b id="vBpm">72</b><span>bpm</span></div>
+  </div>
+</header>
+<main id="app"></main>
+<div class="fixo" id="fixo" hidden></div>
+<dialog id="zoom" aria-label="Imagem ampliada"><img alt=""></dialog>
+<canvas id="fx" aria-hidden="true"></canvas>
+<script>/*DADOS*/</script>
+<script>
+const $=s=>document.querySelector(s), app=$('#app'), fixo=$('#fixo');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const QS=Object.fromEntries(D.qs.map(q=>[q.id,q]));
+const CHAVE='plantao-patologia-v1';
+let P={recordes:{},erradas:[],auto:true,vel:1,run:null};
+try{P={...P,...JSON.parse(localStorage.getItem(CHAVE)||'{}')}}catch{}
+const salvar=()=>{try{localStorage.setItem(CHAVE,JSON.stringify(P))}catch{}};
+const emb=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+// ECG: um batimento a cada 200px; o CSS rola o traço e --beat acelera com a sequência
+$('#ecg').setAttribute('d',Array.from({length:5},(_,i)=>{const x=i*200;return `M${x} 24H${x+70}l6-4 6 4h10l4 4 6-24 6 30 5-10h14l8-6 8 6H${x+200}`}).join(''));
+function vitais(){const r=P.run,s=r?r.seq:0;$('#vAc').textContent=r?r.acertos:0;$('#vSeq').textContent=s;
+  const bpm=72+Math.min(s,12)*7;$('#vBpm').textContent=bpm;document.documentElement.style.setProperty('--beat',(90/bpm).toFixed(2)+'s')}
+
+// ─── Áudio ───
+const A=new Audio();let fila=[],ultima=[];
+function tocar(chaves){A.pause();TTS?.stop();ultima=chaves;fila=[...chaves];prox()}
+function prox(){const k=fila.shift();if(!k){estado(false);return}A.src=D.audio[k];A.playbackRate=P.vel;
+  A.play().then(()=>estado(true)).catch(()=>estado(false))}
+A.onended=prox;
+const estado=on=>{const p=$('.player');if(!p)return;p.classList.toggle('falando',on);const b=$('#pp');if(b)b.textContent=on?'⏸ Pausar':'▶ Ouvir'};
+function alterna(){if(!A.paused){A.pause();estado(false)}else if(A.src&&A.currentTime>0&&!A.ended){A.play();estado(true)}else tocar(ultima)}
+const VELS=[1,1.25,1.5,1.75];
+function playerHTML(){return `<div class="player"><button class="btn" id="pp">▶ Ouvir</button><button class="btn" id="rep">↺ De novo</button>
+<button class="btn" id="vel" aria-label="Velocidade da voz">${P.vel}x</button><div class="onda" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+<button class="btn" id="auto" aria-pressed="${P.auto}">Automático: ${P.auto?'sim':'não'}</button></div>`}
+function ligaPlayer(){$('#pp').onclick=alterna;$('#rep').onclick=()=>tocar(ultima);
+  $('#vel').onclick=e=>{P.vel=VELS[(VELS.indexOf(P.vel)+1)%4];A.playbackRate=P.vel;e.target.textContent=P.vel+'x';salvar()};
+  $('#auto').onclick=e=>{P.auto=!P.auto;e.target.textContent='Automático: '+(P.auto?'sim':'não');e.target.setAttribute('aria-pressed',P.auto);salvar()}}
+
+// ─── Efeitos ───
+let ctx;function bip(notas){try{ctx=ctx||new AudioContext();notas.forEach(([f,t])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o.type='triangle';
+  g.gain.setValueAtTime(.05,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+t+.16);o.connect(g).connect(ctx.destination);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.18)})}catch{}}
+function confete(n){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;const c=$('#fx'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;
+  const cores=['#3ddc97','#ffd166','#56b7f0','#f4708a'],ps=Array.from({length:n},()=>({x:c.width/2,y:c.height*.45,vx:(Math.random()-.5)*11,vy:-Math.random()*11-3,c:cores[Math.random()*4|0],s:4+Math.random()*5}));
+  let t=0;(function q(){x.clearRect(0,0,c.width,c.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.3;x.fillStyle=p.c;x.fillRect(p.x,p.y,p.s,p.s)});if(++t<70)requestAnimationFrame(q);else x.clearRect(0,0,c.width,c.height)})()}
+
+// ─── Telas ───
+function tela(html,tema){A.pause();fila=[];TTS?.stop();falaP=Promise.resolve();document.body.dataset.tema=tema||'';fixo.hidden=true;app.innerHTML=html;scrollTo(0,0);ligaFiguras()}
+function ligaFiguras(){document.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{const d=$('#zoom');d.firstElementChild.src=D.img[b.dataset.zoom];d.firstElementChild.alt=b.firstElementChild.alt;d.showModal()})}
+$('#zoom').onclick=()=>$('#zoom').close();
+$('#inicio').onclick=home;
+const fig=(i,alt)=>`<button data-zoom="${i}" aria-label="Ampliar imagem"><img src="${D.img[i]}" alt="${esc(alt)}"></button>`;
+// casa pelo começo da palavra: "hepatócito" pega "hepatócitos", mas "pleur" não pega o meio de outra palavra
+const termos=t=>D.glos.map(([w,d])=>{const m=t.match(new RegExp('(^|[^\\p{L}\\d])('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[\\p{L}-]*)','iu'));return m&&[m[2].toLowerCase(),d]}).filter(Boolean);
+const glosHTML=(l,aberto)=>l.length?`<details class="bloco glos"${aberto?' open':''}><summary>📖 ${aberto?'Palavras difíceis':'Não sabe alguma palavra do enunciado?'}</summary><dl>${l.map(([w,d])=>`<dt>${esc(w)}</dt><dd>${esc(d)}</dd>`).join('')}</dl></details>`:'';
+const contagem=t=>D.qs.filter(q=>!t||q.tema===t).length;
+const rec=m=>P.recordes[m]!=null?`Recorde: ${P.recordes[m]}%`:'Ainda sem nota';
+
+function home(){vitais();const r=P.run,n=P.erradas.filter(i=>QS[i]).length;
+  tela(`<h1>Plantão de <em>Patologia</em></h1>
+  <p class="sub">${D.qs.length} questões das listas e das provas antigas, com as imagens. Escreva a resposta como na prova: a preceptora corrige pelo sentido, dá pistas sem entregar e, no fim, explica em voz alta com um macete para não esquecer.</p>
+  ${r?`<div class="linha" style="margin-bottom:14px"><button class="btn pri" id="seguir">Continuar plantão (questão ${Math.min(r.i+1,r.ordem.length)} de ${r.ordem.length})</button></div>`:''}
+  <div class="cards">
+    <button class="card full" data-m="tudo"><b>Prova completa</b><small>${contagem()} questões misturadas · ${rec('tudo')}</small></button>
+    ${Object.entries(D.temas).map(([t,v])=>`<button class="card" data-m="${t}" data-tema="${t}"><b>${v.nome}</b><small>${v.lista}</small><small>${contagem(t)} questões · ${rec(t)}</small></button>`).join('')}
+  </div>
+  <div class="linha"><button class="btn" id="cola">Abrir a cola</button>${n?`<button class="btn" id="rev">Revisar as que errei (${n})</button>`:''}</div>`);
+  document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>iniciar(b.dataset.m));
+  $('#cola').onclick=()=>cola('fig');if(n)$('#rev').onclick=()=>iniciar('rev');if(r)$('#seguir').onclick=questao}
+
+function iniciar(m){let ids;if(m==='rev')ids=emb(P.erradas.filter(i=>QS[i]));else if(m==='tudo')ids=emb(D.qs.map(q=>q.id));else ids=D.qs.filter(q=>q.tema===m).map(q=>q.id);
+  P.run={modo:m,ordem:ids,i:0,acertos:0,seq:0,maxSeq:0,resp:{}};salvar();vitais();questao()}
+
+function questao(){const r=P.run;while(r.i<r.ordem.length&&r.ordem[r.i] in r.resp)r.i++;if(r.i>=r.ordem.length)return resultado();
+  const q=QS[r.ordem[r.i]],ops=emb(q.ops.map(([t,w],i)=>({t,w,i})));
+  if(SAMPLE)return escrever(q);
+  tela(`<div class="barra"><i style="width:${r.i/r.ordem.length*100}%"></i></div>
+  <span class="tag">${esc(D.temas[q.tema].nome)} · ${esc(q.ref)} · ${r.i+1} de ${r.ordem.length}</span>
+  <p class="enun">${esc(q.q)}</p>
+  ${glosHTML(termos(q.q),false)}
+  ${q.img.length?`<div class="figs">${q.img.map(i=>fig(i,'Imagem da questão '+q.ref)).join('')}</div>`:''}
+  <div class="ops">${ops.map((o,n)=>`<button class="op" data-i="${o.i}"><span class="l">${'ABCD'[n]}</span><span>${esc(o.t)}<small hidden>${esc(o.w)}</small></span></button>`).join('')}</div>
+  <div id="fb"></div>`,q.tema);
+  document.querySelectorAll('.op').forEach(b=>b.onclick=()=>responder(q,+b.dataset.i))}
+
+function registra(q,ok){const r=P.run;r.resp[q.id]=ok;
+  if(ok){r.acertos++;r.seq++;r.maxSeq=Math.max(r.maxSeq,r.seq);P.erradas=P.erradas.filter(x=>x!==q.id)}
+  else{r.seq=0;if(!P.erradas.includes(q.id))P.erradas.push(q.id)}
+  salvar();vitais();bip(ok?[[660,0],[880,.09]]:[[200,0],[150,.1]]);
+  if(ok)confete(r.seq>=5?110:50);else{document.body.classList.add('arr');setTimeout(()=>document.body.classList.remove('arr'),1600)}}
+
+function responder(q,i){if(q.id in P.run.resp)return;const ok=i===0;registra(q,ok);
+  document.querySelectorAll('.op').forEach(b=>{const n=+b.dataset.i;b.disabled=true;b.querySelector('small').hidden=false;
+    b.classList.add(n===0?'certa':n===i?'errada':'apaga');if(n===i&&!ok)b.classList.add('treme')});
+  painel(q,ok,q.ops[i][1],[`${q.id}.${i}`,`${q.id}.e`])}
+
+// ─── Modo discursivo: só existe no link do claude.ai, onde a página pode pedir ao Claude para corrigir ───
+let SAMPLE=null,TTS=null,falaP=Promise.resolve();
+if(window.claude){claude.use('sample').then(s=>SAMPLE=s,()=>{});claude.use('tts').then(t=>TTS=t,()=>{})}
+function falar(t){if(TTS&&P.auto)falaP=TTS.speak(t,{language:'pt-BR',rate:Math.min(P.vel,1.5)}).catch(()=>{})}
+const VER=/^\s*\**\s*VEREDITO:\s*\**\s*(certo|quase|errado)\W*/i, semVer=t=>t.replace(VER,'').trim();
+const REGRAS='Você é uma preceptora de patologia, simpática e direta, numa prova DISCURSIVA de um estudante de medicina do 5º período. Fale em português do Brasil, em frases curtas, como numa conversa. Sem markdown, sem listas, sem emojis.';
+const contexto=(q,conv)=>`QUESTÃO: ${q.q}${q.img.length?'\n(O estudante está vendo a imagem da questão.)':''}
+GABARITO (o que a resposta precisa conter): ${q.key}
+EXPLICAÇÃO DE APOIO: ${q.exp}${q.aviso?'\nOBSERVAÇÃO: '+q.aviso:''}
+MACETE (use para dar dicas): ${q.tip}${q.filme?'\nFILMINHO (a resposta explicada como cena): '+q.filme:''}
+
+CONVERSA ATÉ AGORA:
+${conv.map(([a,t])=>a+': '+t).join('\n')||'(nenhuma)'}`;
+const pCorrige=(q,conv)=>`${REGRAS}
+
+${contexto(q,conv)}
+
+Avalie a ÚLTIMA resposta do estudante (pode somar o que ele já acertou nas tentativas anteriores).
+- Julgue pelo SIGNIFICADO, não pelas palavras: sinônimos, outra ordem, abreviações e erros de digitação valem.
+- certo: tem todos os pontos essenciais do gabarito e nada errado. Detalhe secundário pode faltar.
+- quase: está no caminho, mas falta um ponto essencial ou tem um erro pequeno.
+- errado: conceito errado, ou não respondeu o que foi perguntado.
+SEJA MUITO OBJETIVA: no máximo 2 frases curtas, umas 25 palavras no total. Nada de teoria, nada de explicação longa.
+- Se não for certo: no máximo 3 palavras sobre o que está certo (ex.: "Tuberculose, ok."), depois a dica no formato "Lembra: ..." com UMA palavra-chave, imagem mental, sigla ou associação que faça ele lembrar o que falta (use o macete). Nunca entregue a resposta.
+- Se for certo: "Isso!" ou parecido e, só se faltou um detalhe, a palavra-chave dele.
+
+Responda exatamente neste formato:
+VEREDITO: certo, quase ou errado (só uma palavra)
+sua fala`;
+const pPista=(q,conv,n)=>`${REGRAS}
+
+${contexto(q,conv)}
+
+O estudante pediu a pista número ${n}. Ele ainda NÃO pode ver a resposta. Dê UMA pista curtíssima (uma frase, até 15 palavras), começando com "Lembra:", que faça ele LEMBRAR sozinho: uma palavra-chave, imagem mental, sigla ou associação, sem dizer a resposta. Pista 1: a imagem ou associação do macete. Pista 2: a sigla, a categoria ou uma palavra-chave. Pista 3 em diante: a primeira letra ou um pedaço das palavras-chave, nunca a resposta inteira. Não repita pistas já dadas.`;
+
+function escrever(q){const r=P.run,conv=[];let pistas=0;
+  tela(`<div class="barra"><i style="width:${r.i/r.ordem.length*100}%"></i></div>
+  <span class="tag">${esc(D.temas[q.tema].nome)} · ${esc(q.ref)} · ${r.i+1} de ${r.ordem.length}</span>
+  <p class="enun">${esc(q.q)}</p>
+  ${glosHTML(termos(q.q),false)}
+  ${q.img.length?`<div class="figs">${q.img.map(i=>fig(i,'Imagem da questão '+q.ref)).join('')}</div>`:''}
+  <div class="chat" id="chat" aria-live="polite"></div>
+  <div class="resp" id="resp"><label for="txt">Sua resposta, como na prova</label><textarea id="txt" placeholder="Escreva aqui… (Ctrl+Enter corrige)"></textarea>
+  <div class="linha"><button class="btn pri" id="env">Corrigir</button><button class="btn" id="pista">💡 Pista</button><button class="btn" id="des">Ver resposta</button></div></div>
+  <div id="fb"></div>`,q.tema);
+  const chat=$('#chat'),txt=$('#txt');
+  const msg=(cls,quem,t)=>{const d=document.createElement('div');d.className='msg '+cls;d.innerHTML=`<b>${esc(quem)}</b><span></span>`;d.lastChild.textContent=t;chat.append(d);d.scrollIntoView({block:'nearest'});return d};
+  const ocupado=on=>['#env','#pista','#des'].forEach(s=>$(s).disabled=on);
+  async function pedir(prompt,opts,m){const span=m.lastChild;span.textContent='Pensando…';ocupado(true);
+    try{return(await SAMPLE(prompt,{...opts,cache:false,onText:({text})=>{span.textContent=semVer(text)||'Pensando…'}})).text}
+    catch(e){if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(e.code)){SAMPLE=null;span.textContent='O Claude não está liberado nesta página. Voltando para as alternativas…';setTimeout(questao,1800)}
+      else span.textContent=e.code==='rate_limited'?'Muitas correções seguidas. Espere um pouco e tente de novo.':'Não consegui corrigir agora. Tente de novo.';
+      m.classList.add('falha');return null}
+    finally{ocupado(false)}}
+  $('#env').onclick=async()=>{const t=txt.value.trim();if(!t)return txt.focus();
+    msg('eu','Você',t);conv.push(['Estudante',t]);txt.value='';
+    const m=msg('cl','Preceptora','');const out=await pedir(pCorrige(q,conv),{effort:'low'},m);
+    if(out==null){conv.pop();txt.value=t;return}
+    const v=((out.match(VER)||[])[1]||'quase').toLowerCase(),fala=semVer(out);
+    m.classList.add(v);m.lastChild.textContent=fala;conv.push(['Preceptora',fala]);falar(fala);
+    if(v==='certo')fechar(q,true);else txt.focus()};
+  $('#pista').onclick=async()=>{pistas++;const m=msg('cl dica','Pista '+pistas,'');const out=await pedir(pPista(q,conv,pistas),{modelTier:'quick'},m);
+    if(out!=null){m.lastChild.textContent=semVer(out);conv.push(['Pista '+pistas,semVer(out)]);falar(semVer(out))}};
+  $('#des').onclick=()=>fechar(q,false);
+  txt.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();$('#env').click()}}}
+
+function fechar(q,ok){if(q.id in P.run.resp)return;registra(q,ok);$('#resp').hidden=true;
+  painel(q,ok,ok?'':'Sem problema: veja o filminho, leia com calma e tente escrever de novo na revisão.',[`${q.id}.t`])}
+
+function painel(q,ok,frase,chaves){const r=P.run,f=$('#fb');f.className='fb';
+  f.innerHTML=`<h2 class="veredito ${ok?'ok':'no'}" tabindex="-1">${ok?(r.seq>=3?`Acertou! ${r.seq} seguidas`:'Acertou!'):'Errou, mas agora vai gravar'}</h2>
+  ${frase?`<p style="margin:0 0 10px">${esc(frase)}</p>`:''}
+  ${playerHTML()}
+  <div class="bloco chave"><h3>Escreva na prova</h3><p>${esc(q.key)}</p></div>
+  ${q.filme?`<div class="bloco filme"><h3>🎬 O filminho</h3><p>${esc(q.filme)}</p></div>`:''}
+  ${glosHTML(termos(q.q+" "+q.key+" "+(q.filme||'')),true)}
+  <div class="bloco macete"><h3>Macete para não esquecer</h3><p>${esc(q.tip)}</p></div>
+  ${q.aviso?`<div class="bloco aviso"><b>Atenção:</b> ${esc(q.aviso)}</div>`:''}
+  <details class="bloco"><summary>Explicação completa</summary><p>${esc(q.exp)}</p></details>
+  ${(q.apoio||[]).length?`<div class="bloco"><h3>Imagens de apoio</h3><div class="figs">${q.apoio.map(([a,c])=>`<figure>${fig(a,c)}<figcaption>${esc(c)}</figcaption></figure>`).join('')}</div></div>`:''}`;
+  ligaFiguras();ligaPlayer();ultima=chaves;if(P.auto)falaP.then(()=>{if(ultima===chaves&&A.paused)tocar(chaves)});
+  const fim=r.i+1>=r.ordem.length;fixo.hidden=false;fixo.innerHTML=`<button class="btn pri" id="seg">${fim?'Ver resultado':'Próxima questão'} →</button>`;
+  $('#seg').onclick=()=>{r.i++;salvar();questao()};
+  const v=f.querySelector('.veredito');v.focus({preventScroll:true});f.scrollIntoView({block:'start'})}
+
+function nivel(p){return p===100?'Lâmina perfeita':p>=85?'Nível chefia':p>=70?'Nível residência':p>=50?'Nível internato':'Primeiro plantão'}
+function resultado(){const r=P.run,tot=r.ordem.length,pct=Math.round(r.acertos/tot*100);
+  P.recordes[r.modo]=Math.max(P.recordes[r.modo]||0,pct);P.run=null;salvar();
+  const err=r.ordem.filter(i=>!r.resp[i]),temas=Object.keys(D.temas).map(t=>{const ids=r.ordem.filter(i=>QS[i].tema===t);return{t,n:ids.length,a:ids.filter(i=>r.resp[i]).length}}).filter(x=>x.n);
+  tela(`<div class="centro"><div class="nota" style="--p:${pct}"><div>${pct}%</div></div><h1 style="font-size:32px">${nivel(pct)}</h1>
+  <p class="sub" style="margin:auto">${r.acertos} de ${tot} certas · melhor sequência: ${r.maxSeq}</p></div>
+  <div class="player" style="margin-top:16px"><button class="btn" id="pp">▶ Ouvir</button><div class="onda" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+  ${temas.map(x=>`<div class="tema-l" data-tema="${x.t}"><span>${D.temas[x.t].nome}</span><div class="barra" style="margin:0"><i style="width:${x.a/x.n*100}%"></i></div><span>${x.a}/${x.n}</span></div>`).join('')}
+  ${err.length?`<h2 style="font-size:20px;margin-top:22px">O que revisar</h2>${err.map(i=>`<details><summary>${esc(QS[i].ref)}</summary><p>${esc(QS[i].q)}</p><p><b>Resposta:</b> ${esc(QS[i].key)}</p><p class="macete" style="padding:10px"><b>Macete:</b> ${esc(QS[i].tip)}</p></details>`).join('')}`:''}
+  <div class="linha" style="justify-content:center;margin-top:18px">${err.length?'<button class="btn pri" id="ref">Refazer as que errei</button>':''}<button class="btn" id="cola">Abrir a cola</button><button class="btn" id="vol">Início</button></div>`);
+  if(err.length)$('#ref').onclick=()=>iniciar('rev');$('#cola').onclick=()=>cola(temas[0].t);$('#vol').onclick=home;
+  $('#pp').onclick=alterna;ultima=[`fim.${pct>=80?'alto':pct>=55?'medio':'baixo'}`];if(pct>=80)confete(140);bip(pct>=80?[[523,0],[659,.1],[784,.2],[1047,.3]]:[[523,0],[659,.12]]);if(P.auto)tocar(ultima);vitais()}
+
+function cola(t){const c=D.cola[t];tela(`<h1 style="font-size:32px">A cola</h1>
+  <div class="linha" style="margin-bottom:10px">${Object.entries(D.temas).map(([k,v])=>`<button class="btn aba" data-t="${k}" data-tema="${k}" aria-pressed="${k===t}">${v.nome}</button>`).join('')}</div>
+  ${c.tabelas.map(tb=>`<div class="tab"><table><thead><tr>${tb.colunas.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${tb.linhas.map(l=>`<tr>${l.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`).join('')}
+  <div class="bloco macete"><h3>Fale sem olhar</h3><p>${esc(c.frase)}</p></div>
+  <div class="player" style="margin-top:12px"><button class="btn" id="pp">▶ Ouvir</button><div class="onda" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="linha"><button class="btn" id="vol">Início</button></div>`,t);
+  document.querySelectorAll('.aba').forEach(b=>b.onclick=()=>cola(b.dataset.t));$('#vol').onclick=home;$('#pp').onclick=alterna;ultima=['cola.'+t]}
+
+addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||$('#zoom').open||e.target.tagName==='TEXTAREA')return;const k=e.key.toLowerCase(),ops=[...document.querySelectorAll('.op:not([disabled])')];
+  const n='abcd'.indexOf(k)>=0?'abcd'.indexOf(k):'1234'.indexOf(k);
+  if(ops.length&&n>=0&&k.length===1&&ops[n]){ops[n].click();return}
+  if((k==='enter'||k==='arrowright')&&!fixo.hidden&&document.activeElement.tagName!=='BUTTON'){$('#seg').click();e.preventDefault()}
+  if(k===' '&&$('#pp')&&document.activeElement.tagName!=='BUTTON'){alterna();e.preventDefault()}});
+home();
+</script>
+</body>
+</html>
