@@ -2,81 +2,61 @@
 
 Site: https://alencastrojp12-code.github.io/plantao-patologia/
 
-## Como editar (passo a passo)
+Cada pessoa edita pelo próprio Claude. O que um muda vai para o GitHub, e o Claude do outro puxa de lá antes de mexer.
+As regras que o Claude segue estão em [`CLAUDE.md`](CLAUDE.md).
 
-### 1. Uma vez só: preparar o computador (Windows)
+## Passo a passo (uma vez só)
 
-1. Aceite o convite de colaborador que chegou no seu e-mail (ou em github.com/notifications).
-2. Instale o **Git**: https://git-scm.com/download/win (pode ir clicando em "Next").
-3. Instale o **Python**: https://www.python.org/downloads/. Na primeira tela, **marque "Add python.exe to PATH"**.
-4. Abra o **PowerShell** e rode, uma linha por vez:
+1. **Aceite o convite** de colaborador que chegou no seu e-mail do GitHub (ou em https://github.com/notifications).
+2. **Instale o app do Claude** (https://claude.ai/download) e entre na sua conta. Precisa de um plano que tenha o Claude Code (aba **Code**).
+3. **Instale o Git** (https://git-scm.com/download/win) e o **Python** (https://www.python.org/downloads/). No Python, **marque "Add python.exe to PATH"** na primeira tela.
+4. No app do Claude, abra a aba **Code**, escolha a pasta **Documentos** e mande:
 
-```
-cd $HOME\Documents
-git clone https://github.com/alencastrojp12-code/plantao-patologia.git
-cd plantao-patologia
-python -m pip install edge-tts
-```
+   > Clona o repositório https://github.com/alencastrojp12-code/plantao-patologia aqui e instala o edge-tts no Python. Depois me diz se deu tudo certo.
 
-Na primeira vez que você enviar algo, abre uma janela pedindo login no GitHub: entre com a sua conta.
+5. Comece uma conversa nova na aba Code, agora escolhendo a pasta **Documentos\plantao-patologia**. É sempre nessa pasta que você vai trabalhar.
 
-### 2. Toda vez que for mexer
+Na primeira vez que o Claude enviar algo, abre uma janela pedindo login no GitHub: entre com a sua conta.
 
-No PowerShell, dentro da pasta `plantao-patologia`:
+## No dia a dia
 
-```
-git pull
-```
+Abra o Claude na pasta `plantao-patologia` e peça o que quiser, por exemplo:
 
-(isso baixa o que a outra pessoa mudou; sempre faça antes de editar)
+- "Acrescenta essa questão da prova antiga: …" (pode mandar o PDF ou a foto)
+- "Corrige a explicação da questão de pielonefrite aguda"
+- "Tira o tema X, não vai cair"
 
-### 3. Editar as questões
+O Claude puxa o que o outro mudou, edita, gera o site, confere e envia para o GitHub. Em 1 ou 2 minutos o site atualiza (se não aparecer, aperte Ctrl+F5).
 
-Tudo fica em **`fonte/perguntas.py`** (abra no Bloco de Notas ou no VS Code). Cada questão é um bloco `dict(...)`:
+⚠️ O "Escreva na prova" das questões que já existem não muda sem combinar: são as respostas que já foram decoradas.
+
+## Como as questões ficam guardadas (se quiser mexer na mão)
+
+Tudo fica em `fonte/perguntas.py`. Cada questão é um bloco `dict(...)`:
 
 | Campo | O que é |
 |---|---|
-| `id` | código único (ex.: `r7`). Não repita. |
+| `id` | código único (ex.: `r7`) |
 | `tema` | a caixinha: `fig`, `pul`, `car`, `tb`, `rim`, `neo` |
 | `ref` | de onde veio (ex.: "Provas antigas · Pielonefrite a") |
-| `img` | fotos do enunciado: nomes dos arquivos de `fonte/img/` sem o `.jpg` |
+| `img` | fotos do enunciado: nomes em `fonte/img/` sem o `.jpg` |
 | `q` | o enunciado |
-| `ops` | 4 alternativas, cada uma `("texto", "por que está certa/errada")`. **A primeira é sempre a certa** (o site embaralha). |
-| `key` | **"Escreva na prova"**: a resposta curta que se escreve na prova |
+| `ops` | 4 alternativas `("texto", "por que está certa/errada")`; **a primeira é a certa** (o site embaralha) |
+| `key` | **"Escreva na prova"** |
 | `filme` | 🎬 o filminho (vira o áudio do final) |
 | `tip` | o macete |
 | `exp` | explicação completa |
 | `aviso` | (opcional) erro de gabarito ou o que o professor descontou |
-| `apoio` | (opcional) fotos extras depois de responder: `[("nome_da_foto", "legenda")]` |
+| `apoio` | (opcional) fotos extras depois de responder: `[("foto", "legenda")]` |
 
-Outras partes do mesmo arquivo: `TEMAS` (as caixinhas), `COLA` (as colas por tema) e `GLOSSARIO` (palavras difíceis).
-
-Fotos novas: salve em `fonte/img/` como `.jpg` e use o nome sem `.jpg` em `img` ou `apoio`.
-
-⚠️ **Não mude o `key` das questões que já existem sem combinar antes**: são as respostas que já foram decoradas.
-
-### 4. Gerar o site de novo
+Comandos, no PowerShell, dentro da pasta `plantao-patologia`:
 
 ```
-python fonte/build.py fonte/img .
-```
-
-- Na primeira vez ele grava todos os áudios de novo (precisa de internet, leva alguns minutos). Depois só grava os que mudaram.
-- Se der erro, ele mostra a linha. O mais comum é vírgula ou aspas faltando no `perguntas.py`.
-- Para conferir antes de enviar, abra o arquivo `prova-patologia.html` que aparece na pasta (dois cliques).
-
-### 5. Enviar para o site
-
-```
+git pull
+python fonte/build.py fonte/img
 git add -A
 git commit -m "o que eu mudei"
 git push
 ```
 
-Em 1 ou 2 minutos o site atualiza sozinho (se não aparecer, aperte Ctrl+F5).
-
-## Dúvidas comuns
-
-- **`git push` recusado ("rejected")**: a outra pessoa enviou algo antes. Rode `git pull` e depois `git push` de novo.
-- **`python` não é reconhecido**: o Python foi instalado sem "Add to PATH". Reinstale marcando essa opção.
-- **Não editar `index.html` nem a pasta `a/` na mão**: elas são geradas pelo passo 4 e qualquer mudança feita nelas é apagada na próxima geração.
+Não edite `index.html` nem a pasta `a/` na mão: eles são gerados pelo `build.py`.

@@ -1,5 +1,5 @@
 """Gera ../prova-patologia.html (arquivo único, com imagens e áudios embutidos).
-Uso: python build.py img [pasta_do_site]   (precisa de edge-tts; áudios ficam em cache/; site padrão: ../celular)"""
+Uso: python build.py img [pasta_do_site]   (precisa de edge-tts; áudios ficam em cache/; site padrão: a pasta acima de fonte/ (raiz do repositório))"""
 import asyncio, base64, hashlib, json, re, sys
 from pathlib import Path
 import edge_tts
@@ -68,7 +68,7 @@ saida = AQUI.parent / "prova-patologia.html"
 saida.write_text(montar(audio), encoding="utf-8")
 
 # versão web: a página tem limite de 16 MiB, então os áudios viram arquivos que baixam só ao tocar
-web = Path(sys.argv[2]) if len(sys.argv) > 2 else AQUI.parent / "celular"; (web / "a").mkdir(parents=True, exist_ok=True)
+web = Path(sys.argv[2]) if len(sys.argv) > 2 else AQUI.parent; (web / "a").mkdir(parents=True, exist_ok=True)
 for velho in (web / "a").glob("*.mp3"): velho.unlink()  # questão removida não deixa áudio sobrando
 for k, f in arquivos.items():
     (web / "a" / f"{k}.mp3").write_bytes(Path(f).read_bytes())
